@@ -1,0 +1,137 @@
+{
+  "theme": "Light",
+  "archetype": "Archetype 3 (Pastel & Soft) with Neo-Brutalist contrast",
+  "reasoning": "The user requested a 'fresh mobile-optimized look', migrating away from a dark brutalist web aesthetic. For an 8-month intensive engineering grind, a soft pastel palette combined with high-contrast sharp boundaries (Neo-Brutalism) prevents visual fatigue, while chunky tactile components make checking off daily tasks highly satisfying.",
+  "typography": {
+    "anti_default_rule": "Avoid generic sans-serifs for headings. Used highly legible, modern geometric sans.",
+    "fonts": {
+      "headings": "Outfit",
+      "body": "DM Sans",
+      "mono": "JetBrains Mono"
+    },
+    "hierarchy_tailwind": {
+      "h1": "text-4xl font-extrabold tracking-tight",
+      "h2": "text-2xl font-bold tracking-tight",
+      "h3": "text-xl font-semibold",
+      "body": "text-base font-normal leading-relaxed",
+      "overline": "text-xs font-bold uppercase tracking-widest"
+    }
+  },
+  "colors": {
+    "backgrounds": {
+      "app": "bg-slate-50",
+      "surface": "bg-white",
+      "glass": "bg-white/70 backdrop-blur-xl"
+    },
+    "text": {
+      "primary": "text-slate-900",
+      "secondary": "text-slate-500",
+      "inverse": "text-white"
+    },
+    "borders": {
+      "default": "border-slate-200",
+      "dark": "border-slate-900",
+      "focus": "border-emerald-400"
+    },
+    "brand": {
+      "primary": "bg-slate-900 text-white",
+      "accent_success": "bg-emerald-400 text-slate-900",
+      "accent_streak": "bg-amber-400 text-slate-900",
+      "accent_locked": "bg-slate-100 text-slate-400"
+    },
+    "stream_categories": {
+      "dsa": {
+        "bg": "bg-indigo-100",
+        "text": "text-indigo-700",
+        "border": "border-indigo-200"
+      },
+      "backend": {
+        "bg": "bg-emerald-100",
+        "text": "text-emerald-700",
+        "border": "border-emerald-200"
+      },
+      "data": {
+        "bg": "bg-amber-100",
+        "text": "text-amber-700",
+        "border": "border-amber-200"
+      },
+      "cloud": {
+        "bg": "bg-sky-100",
+        "text": "text-sky-700",
+        "border": "border-sky-200"
+      }
+    }
+  },
+  "spacing_and_layout": {
+    "philosophy": "Generous Spacing & Tactile Cards. Do not cram elements; use the full vertical real estate of the mobile screen.",
+    "screen_padding": "px-6 py-4",
+    "card_radius": "rounded-3xl",
+    "button_radius": "rounded-2xl",
+    "pill_radius": "rounded-full",
+    "gap_system": {
+      "sections": "gap-8",
+      "cards": "gap-4",
+      "items": "gap-2"
+    }
+  },
+  "components": {
+    "task_card": {
+      "style": "bg-white rounded-3xl p-6 border-2 border-slate-100 shadow-sm",
+      "active_style": "border-slate-900 shadow-[0_8px_0_0_rgba(15,23,42,1)] -translate-y-1 transition-transform",
+      "completed_style": "bg-emerald-50 border-emerald-400",
+      "locked_style": "bg-slate-50 border-slate-200 opacity-60",
+      "description": "The main interaction point. Needs to feel chunky and 'pressable'. Must contain the stream pill, task title, and a large 'Upload Proof' button or image thumbnail."
+    },
+    "master_progress_bar": {
+      "style": "h-3 bg-slate-200 rounded-full overflow-hidden",
+      "fill_style": "h-full bg-slate-900 rounded-full",
+      "description": "A thick, highly visible progress bar fixed near the top of the Home or Analytics view."
+    },
+    "streak_counter": {
+      "style": "flex flex-row items-center gap-2 bg-amber-100 px-4 py-2 rounded-full border border-amber-200",
+      "text_style": "text-amber-700 font-bold",
+      "description": "Should use a flame icon. Display prominently on the top header."
+    },
+    "navigation_bottom_sheet": {
+      "style": "bg-white rounded-t-3xl shadow-[0_-10px_40px_rgba(0,0,0,0.1)]",
+      "description": "Instead of a web sidebar, use a bottom sheet or standard bottom tab navigator to access Weeks/Months."
+    },
+    "filter_pills": {
+      "style": "px-5 py-2 rounded-full border border-slate-200 bg-white font-semibold text-sm",
+      "active_style": "bg-slate-900 text-white border-slate-900"
+    }
+  },
+  "motion_and_interactions": {
+    "press_state": "All buttons and cards must have a scale-down effect (e.g., scale: 0.98) on press to mimic physical buttons.",
+    "completion_animation": "When a photo is uploaded and a task is marked done, the card background should transition smoothly to emerald-50 and trigger a brief haptic feedback (if possible in RN) and a checkmark pop-in.",
+    "list_entrance": "Stagger the entrance of the 4 daily task cards when the day loads."
+  },
+  "icons_and_assets": {
+    "library": "Phosphor Icons (Duotone) or Lucide (Stroke width 2.5 for thicker, friendlier appearance)",
+    "usage_rules": "Use large, bold icons. Avoid thin, clinical iconography."
+  },
+  "media": {
+    "image_urls": [
+      {
+        "url": "https://images.pexels.com/photos/16615613/pexels-photo-16615613.jpeg",
+        "description": "Minimalist geometric shapes against a clear pastel sky.",
+        "category": "hero_background"
+      },
+      {
+        "url": "https://images.pexels.com/photos/7307360/pexels-photo-7307360.jpeg",
+        "description": "Creative arrangement of colorful geometric shapes against a white background.",
+        "category": "empty_state_or_analytics_header"
+      }
+    ],
+    "rules": "Use these images for generic motivational banners at the top of the Analytics or Weekly Summary pages. Do not use placeholder URLs anywhere."
+  },
+  "instructions_to_main_agent": [
+    "You are building a React Native Expo app. Translate the Tailwind utility concepts provided in these guidelines into your React Native styling solution (e.g., NativeWind or StyleSheet).",
+    "Replace the Web-based 'Sidebar' with a Mobile-Native Navigation pattern: use a Bottom Tab Navigator for main views (Today, Analytics, Backlog) and a Bottom Sheet (or modal) for Month/Week selection.",
+    "For the 'Photo Proof' requirement, implement an image picker/camera modal that attaches to the Task Card.",
+    "The 4 Task Cards (DSA, Backend, Data, Cloud) are the core of the app. Render them as large 'Bento' style blocks (refer to components.task_card in this JSON).",
+    "Ensure the layout strictly follows the generous padding rules (px-6 py-4 for screens, rounded-3xl for cards). Avoid standard 'Bootstrap/Vercel' look; lean into the Neo-brutalist tactile aesthetic.",
+    "Every interactive element must include 'testID' attributes (the RN equivalent of data-testid) formatted in kebab-case (e.g., testID='upload-proof-button').",
+    "Implement the 'Day Locking Mechanism' by graying out future days and disabling interactions, visually distinct from pending or completed tasks."
+  ]
+}
