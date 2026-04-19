@@ -45,15 +45,16 @@ export default function SettingsScreen() {
   };
 
   const handleDeleteRoadmap = async (item: RoadmapListItem) => {
-    if (item.isDefault) {
-      Alert.alert('Cannot Delete', 'The default roadmap cannot be deleted.');
+    // Can't delete the last remaining roadmap
+    if (meta.roadmapList.length <= 1) {
+      Alert.alert('Cannot Delete', 'You need at least one roadmap.');
       return;
     }
     // If already confirming this item, execute delete
     if (confirmDeleteId === item.id) {
       await deleteRoadmap(item.id);
       const newList = meta.roadmapList.filter((r) => r.id !== item.id);
-      const newActiveId = meta.activeRoadmapId === item.id ? 'default' : meta.activeRoadmapId;
+      const newActiveId = meta.activeRoadmapId === item.id ? newList[0].id : meta.activeRoadmapId;
       const updated = { ...meta, roadmapList: newList, activeRoadmapId: newActiveId };
       await saveMeta(updated);
       setMeta(updated);
@@ -61,9 +62,24 @@ export default function SettingsScreen() {
     } else {
       // First tap — show confirmation state
       setConfirmDeleteId(item.id);
-      // Auto-dismiss confirmation after 3 seconds
       setTimeout(() => setConfirmDeleteId(null), 3000);
     }
+  };
+
+  const handleRestoreDefault = async () => {
+    const alreadyExists = meta.roadmapList.some((r) => r.id === 'default');
+    if (alreadyExists) return;
+    const updated = { ...meta };
+    updated.roadmapList.push({
+      id: 'default',
+      name: '8-Month Engineering Roadmap',
+      isDefault: true,
+      streamCount: 4,
+      totalDays: 224,
+      createdAt: '2026-01-01T00:00:00Z',
+    });
+    await saveMeta(updated);
+    setMeta(updated);
   };
 
   const handleToggleNotifications = async (enabled: boolean) => {
@@ -153,11 +169,12 @@ export default function SettingsScreen() {
                       <Text style={styles.roadmapItemName}>{item.name}</Text>
                       <Text style={styles.roadmapItemSub}>
                         {item.streamCount} streams · {item.totalDays} days
+                        {item.isDefault ? ' · Default' : ''}
                       </Text>
                     </View>
                   </View>
                 </TouchableOpacity>
-                {!item.isDefault && (
+                {meta.roadmapList.length > 1 && (
                   <TouchableOpacity
                     onPress={() => handleDeleteRoadmap(item)}
                     style={[
@@ -176,6 +193,18 @@ export default function SettingsScreen() {
               </View>
             );
           })}
+
+          {/* Restore Default Roadmap */}
+          {!meta.roadmapList.some((r) => r.id === 'default') && (
+            <TouchableOpacity
+              style={styles.restoreBtn}
+              onPress={handleRestoreDefault}
+              testID="restore-default-btn"
+            >
+              <Feather name="refresh-cw" size={16} color={Colors.textPrimary} />
+              <Text style={styles.restoreBtnText}>Restore 8-Month Engineering Roadmap</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Notifications */}
@@ -277,6 +306,8 @@ const styles = StyleSheet.create({
   deleteBtn: { padding: 10, borderRadius: 10, minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
   deleteBtnConfirm: { backgroundColor: Colors.dangerBg, borderWidth: 1.5, borderColor: Colors.danger, paddingHorizontal: 12 },
   deleteBtnConfirmText: { fontSize: 11, fontWeight: '800', color: Colors.danger },
+  restoreBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 10, paddingVertical: 14, borderRadius: 14, borderWidth: 2, borderColor: Colors.border, borderStyle: 'dashed', backgroundColor: Colors.appBg },
+  restoreBtnText: { fontSize: 13, fontWeight: '700', color: Colors.textPrimary },
   notifRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   notifLabel: { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
   notifSub: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
