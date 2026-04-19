@@ -209,7 +209,42 @@ uvicorn server:app --host 0.0.0.0 --port 8001
 
 ## Building the APK
 
-### Method 1: EAS Build (Recommended — Cloud Build)
+### Fully Local Build (No Cloud, No Expo Go)
+
+> **See [`LOCAL_BUILD_GUIDE.md`](./LOCAL_BUILD_GUIDE.md) for the full detailed guide with troubleshooting.**
+
+You only need: **Android Studio** + **Node.js 18+**. No Expo account, no cloud, no Expo Go.
+
+```bash
+# 1. Install JS dependencies
+cd frontend
+npm install
+
+# 2. Generate native Android project
+npx expo prebuild --platform android --clean
+
+# 3. Build the APK
+cd android
+./gradlew assembleDebug        # Windows: gradlew.bat assembleDebug
+```
+
+**Your standalone APK** will be at:
+```
+frontend/android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+Transfer it to your phone → Install → Done. No Expo Go needed.
+
+For a **signed release APK**, follow the full guide in `LOCAL_BUILD_GUIDE.md`.
+
+#### Opening in Android Studio (Visual Method)
+1. Run `npx expo prebuild --platform android --clean` first
+2. Open Android Studio → File → Open → select `frontend/android`
+3. Wait for Gradle sync
+4. Build → Build Bundle(s) / APK(s) → Build APK(s)
+5. Click the notification link to find your APK
+
+### Method 2: EAS Build (Recommended — Cloud Build)
 
 EAS (Expo Application Services) builds your APK in the cloud. No Android Studio needed.
 
