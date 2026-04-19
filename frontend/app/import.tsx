@@ -19,6 +19,7 @@ export default function ImportScreen() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [importSuccess, setImportSuccess] = useState<string | null>(null);
   const router = useRouter();
 
   const handlePickFile = async () => {
@@ -89,11 +90,12 @@ export default function ImportScreen() {
       await saveMeta(meta);
 
       setLoading(false);
-      Alert.alert(
-        'Imported!',
-        `"${parsed.name}" is now your active roadmap.`,
-        [{ text: 'OK', onPress: () => router.back() }]
-      );
+      setImportSuccess(parsed.name);
+
+      // Navigate back after a short delay so user sees success
+      setTimeout(() => {
+        router.back();
+      }, 1200);
     } catch (e: any) {
       setError(`Import failed: ${e.message}`);
       setLoading(false);
@@ -111,6 +113,17 @@ export default function ImportScreen() {
           <Text style={styles.title}>Import Roadmap</Text>
           <View style={{ width: 44 }} />
         </View>
+
+        {/* Success Banner */}
+        {importSuccess && (
+          <View style={styles.successCard} testID="import-success">
+            <Feather name="check-circle" size={24} color={Colors.successDark} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.successTitle}>Imported Successfully!</Text>
+              <Text style={styles.successSub}>"{importSuccess}" is now active. Returning...</Text>
+            </View>
+          </View>
+        )}
 
         {/* Instructions */}
         <View style={styles.infoCard}>
@@ -247,6 +260,9 @@ const styles = StyleSheet.create({
   pickBtnSub: { fontSize: 12, color: Colors.textSecondary },
   errorCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.dangerBg, borderRadius: 14, padding: 14, borderWidth: 1.5, borderColor: Colors.danger, marginBottom: 20, gap: 10 },
   errorText: { fontSize: 13, color: Colors.danger, fontWeight: '600', flex: 1 },
+  successCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.successBg, borderRadius: 14, padding: 16, borderWidth: 2, borderColor: Colors.success, marginBottom: 20, gap: 12 },
+  successTitle: { fontSize: 15, fontWeight: '800', color: Colors.successDark },
+  successSub: { fontSize: 12, color: Colors.successDark, marginTop: 2 },
   previewCard: { backgroundColor: Colors.surface, borderRadius: 20, padding: 20, borderWidth: 2, borderColor: Colors.success, marginBottom: 20 },
   previewTitle: { fontSize: 14, fontWeight: '800', color: Colors.successDark, marginBottom: 16, letterSpacing: 0.5 },
   previewRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: Colors.border },

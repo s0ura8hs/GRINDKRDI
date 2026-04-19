@@ -24,6 +24,7 @@ Notifications.setNotificationHandler({
 
 export default function SettingsScreen() {
   const [meta, setMeta] = useState<AppMeta | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const router = useRouter();
 
   useFocusEffect(
@@ -43,30 +44,26 @@ export default function SettingsScreen() {
     Alert.alert('Switched!', 'Roadmap changed. Go to Today to see it.');
   };
 
-  const handleDeleteRoadmap = (item: RoadmapListItem) => {
+  const handleDeleteRoadmap = async (item: RoadmapListItem) => {
     if (item.isDefault) {
       Alert.alert('Cannot Delete', 'The default roadmap cannot be deleted.');
       return;
     }
-    Alert.alert(
-      'Delete Roadmap',
-      `Delete "${item.name}"? All progress will be lost.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            await deleteRoadmap(item.id);
-            const newList = meta.roadmapList.filter((r) => r.id !== item.id);
-            const newActiveId = meta.activeRoadmapId === item.id ? 'default' : meta.activeRoadmapId;
-            const updated = { ...meta, roadmapList: newList, activeRoadmapId: newActiveId };
-            await saveMeta(updated);
-            setMeta(updated);
-          },
-        },
-      ]
-    );
+    // If already confirming this item, execute delete
+    if (confirmDeleteId === item.id) {
+      await deleteRoadmap(item.id);
+      const newList = meta.roadmapList.filter((r) => r.id !== item.id);
+      const newActiveId = meta.activeRoadmapId === item.id ? 'default' : meta.activeRoadmapId;
+      const updated = { ...meta, roadmapList: newList, activeRoadmapId: newActiveId };
+      await saveMeta(updated);
+      setMeta(updated);
+      setConfirmDeleteId(null);
+    } else {
+      // First tap — show confirmation state
+      setConfirmDeleteId(item.id);
+      // Auto-dismiss confirmation after 3 seconds
+      setTimeout(() => setConfirmDeleteId(null), 3000);
+    }
   };
 
   const handleToggleNotifications = async (enabled: boolean) => {
@@ -163,10 +160,17 @@ export default function SettingsScreen() {
                 {!item.isDefault && (
                   <TouchableOpacity
                     onPress={() => handleDeleteRoadmap(item)}
-                    style={styles.deleteBtn}
+                    style={[
+                      styles.deleteBtn,
+                      confirmDeleteId === item.id && styles.deleteBtnConfirm,
+                    ]}
                     testID={`roadmap-delete-${item.id}`}
                   >
-                    <Feather name="trash-2" size={16} color={Colors.danger} />
+                    {confirmDeleteId === item.id ? (
+                      <Text style={styles.deleteBtnConfirmText}>Tap to confirm</Text>
+                    ) : (
+                      <Feather name="trash-2" size={16} color={Colors.danger} />
+                    )}
                   </TouchableOpacity>
                 )}
               </View>
@@ -270,7 +274,9 @@ const styles = StyleSheet.create({
   roadmapItemLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   roadmapItemName: { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
   roadmapItemSub: { fontSize: 11, color: Colors.textSecondary, marginTop: 2 },
-  deleteBtn: { padding: 8 },
+  deleteBtn: { padding: 10, borderRadius: 10, minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' },
+  deleteBtnConfirm: { backgroundColor: Colors.dangerBg, borderWidth: 1.5, borderColor: Colors.danger, paddingHorizontal: 12 },
+  deleteBtnConfirmText: { fontSize: 11, fontWeight: '800', color: Colors.danger },
   notifRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   notifLabel: { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
   notifSub: { fontSize: 12, color: Colors.textSecondary, marginTop: 2 },
