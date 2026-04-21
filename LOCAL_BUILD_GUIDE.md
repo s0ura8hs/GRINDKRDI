@@ -1,174 +1,127 @@
-# Building GRIND APK Locally (No Expo Go, No Cloud, No Metro)
+# Building GRIND APK — STANDALONE (No Metro, No Expo Go)
 
-## Prerequisites
-- Android Studio (with Android SDK)
-- Node.js 18+
-- Java JDK 17 (comes with Android Studio)
+## Why "Unable to load script" Happens
+
+Debug APKs are **hardcoded to connect to Metro bundler** on your computer.
+Even if you manually put the JS bundle file in the assets folder, the debug
+build config **ignores it** and tries to connect to Metro anyway.
+
+**The fix:** Tell Gradle to embed the JS bundle in debug builds by adding
+`bundleInDebug = true` to `android/app/build.gradle`.
 
 ---
 
-## QUICK BUILD (Recommended — One Script)
+## Windows — Quick Build (Use This)
+
+### Option A: Automated Script
+```cmd
+cd frontend
+build-apk.bat
+```
+This handles everything including the Gradle patch.
+
+### Option B: Manual Steps
+
+```cmd
+cd frontend
+
+REM 1. Install dependencies
+npm install
+
+REM 2. Generate Android project
+npx expo prebuild --platform android --clean
+
+REM 3. CRITICAL: Patch build.gradle
+REM    Open android\app\build.gradle in a text editor
+REM    Find the "react {" block and add this line inside it:
+REM
+REM    react {
+REM        bundleInDebug = true       ← ADD THIS LINE
+REM        hermesEnabled = true
+REM        ... rest of config ...
+REM    }
+
+REM 4. Create assets folder and bundle JS
+mkdir android\app\src\main\assets
+
+npx react-native bundle --platform android --dev false --entry-file node_modules/expo-router/entry.js --bundle-output android\app\src\main\assets\index.android.bundle --assets-dest android\app\src\main\res\
+
+REM 5. Build
+cd android
+gradlew.bat assembleDebug
+cd ..
+```
+
+APK at: `android\app\build\outputs\apk\debug\app-debug.apk`
+
+---
+
+## macOS/Linux — Quick Build
 
 ```bash
 cd frontend
 npm install
 npx expo prebuild --platform android --clean
-bash build-apk.sh
-```
 
-Your standalone APK will be ready. Transfer to phone → Install → Works offline.
+# Patch build.gradle — add bundleInDebug = true inside the react { } block
+sed -i '' 's/react {/react {\n    bundleInDebug = true/' android/app/build.gradle 2>/dev/null || \
+sed -i 's/react {/react {\n    bundleInDebug = true/' android/app/build.gradle
 
----
-
-## MANUAL BUILD (Step by Step)
-
-### Step 1: Install Dependencies
-```bash
-cd frontend
-npm install
-```
-
-### Step 2: Generate Native Android Project
-```bash
-npx expo prebuild --platform android --clean
-```
-
-### Step 3: Create JS Bundle (⚠️ THIS IS THE CRITICAL STEP)
-
-> **This is what makes the APK work standalone without Metro/computer.**
-> Without this step, the app will show "Unable to load script" error.
-
-```bash
-# Create the assets folder
+# Bundle JS
 mkdir -p android/app/src/main/assets
-
-# Bundle all JavaScript into the APK
-npx react-native bundle \
-  --platform android \
-  --dev false \
+npx react-native bundle --platform android --dev false \
   --entry-file node_modules/expo-router/entry.js \
   --bundle-output android/app/src/main/assets/index.android.bundle \
   --assets-dest android/app/src/main/res/
+
+# Build
+cd android && ./gradlew assembleDebug && cd ..
 ```
-
-**Windows PowerShell version:**
-```powershell
-mkdir -Force android\app\src\main\assets
-
-npx react-native bundle `
-  --platform android `
-  --dev false `
-  --entry-file node_modules/expo-router/entry.js `
-  --bundle-output android\app\src\main\assets\index.android.bundle `
-  --assets-dest android\app\src\main\res\
-```
-
-### Step 4: Build the APK
-
-**Option A — Debug APK (No signing needed):**
-```bash
-cd android
-./gradlew assembleDebug
-```
-APK at: `android/app/build/outputs/apk/debug/app-debug.apk`
-
-**Option B — Release APK (Signed, recommended):**
-
-First generate a keystore (one time only):
-```bash
-keytool -genkeypair -v \
-  -storetype PKCS12 \
-  -keystore android/app/grind-release.keystore \
-  -alias grind \
-  -keyalg RSA \
-  -keysize 2048 \
-  -validity 10000
-```
-
-Add to `android/gradle.properties`:
-```properties
-GRIND_UPLOAD_STORE_FILE=grind-release.keystore
-GRIND_UPLOAD_KEY_ALIAS=grind
-GRIND_UPLOAD_STORE_PASSWORD=your_password
-GRIND_UPLOAD_KEY_PASSWORD=your_password
-```
-
-Edit `android/app/build.gradle` — inside the `android {` block add:
-```gradle
-signingConfigs {
-    release {
-        storeFile file(GRIND_UPLOAD_STORE_FILE)
-        storePassword GRIND_UPLOAD_STORE_PASSWORD
-        keyAlias GRIND_UPLOAD_KEY_ALIAS
-        keyPassword GRIND_UPLOAD_KEY_PASSWORD
-    }
-}
-buildTypes {
-    release {
-        signingConfig signingConfigs.release
-    }
-}
-```
-
-Then build:
-```bash
-cd android
-./gradlew assembleRelease
-```
-APK at: `android/app/build/outputs/apk/release/app-release.apk`
 
 ---
 
-## Via Android Studio (Visual Method)
+## Via Android Studio
 
-1. Run these commands first:
-```bash
-cd frontend
-npm install
-npx expo prebuild --platform android --clean
-mkdir -p android/app/src/main/assets
-npx react-native bundle --platform android --dev false --entry-file node_modules/expo-router/entry.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res/
+1. Run steps 1-4 from the manual steps above (up to and including the bundle command)
+2. Open Android Studio → File → Open → select `frontend/android`
+3. **IMPORTANT:** Before building, open `app/build.gradle` and verify `bundleInDebug = true` is inside the `react { }` block
+4. Build → Build Bundle(s) / APK(s) → Build APK(s)
+
+---
+
+## Verifying the Fix
+
+After building, check that the bundle file is inside the APK:
+```cmd
+REM Windows
+"C:\Users\YOUR_NAME\AppData\Local\Android\Sdk\build-tools\35.0.0\aapt" dump --no-values resources android\app\build\outputs\apk\debug\app-debug.apk | findstr "index.android"
 ```
 
-2. Open Android Studio → **File → Open** → select `frontend/android`
-3. Wait for Gradle sync to complete
-4. **Build → Build Bundle(s) / APK(s) → Build APK(s)**
-5. Click the notification link to find your APK
+You should see `index.android.bundle` listed. If not, the bundle wasn't included.
 
 ---
 
-## Installing on Your Phone
+## Troubleshooting
 
-1. Transfer `.apk` to your phone (USB / email / Google Drive)
-2. Settings → Security → "Install from Unknown Sources" → Enable
-3. Tap the `.apk` → Install
-4. Open GRIND — **fully standalone, no computer connection needed**
+### Still seeing "Unable to load script"
+1. Verify `bundleInDebug = true` is in `android/app/build.gradle` inside the `react { }` block
+2. Verify `android/app/src/main/assets/index.android.bundle` exists and is > 1MB
+3. Rebuild from scratch: delete `android` folder and start over
 
----
-
-## Common Errors
-
-### "Unable to load script" (Red Screen)
-**Cause:** The JS bundle is not embedded in the APK.
-**Fix:** Run Step 3 above (the `npx react-native bundle` command) before building.
+### "Execution failed for task ':app:mergeDebugResources'" (duplicate resources)
+```cmd
+REM Delete duplicate drawable folders that the bundle command created
+for /d %G in (android\app\src\main\res\drawable-*) do rmdir /s /q "%G"
+rmdir /s /q android\app\src\main\res\raw 2>nul
+REM Then rebuild
+cd android && gradlew.bat assembleDebug && cd ..
+```
 
 ### "SDK location not found"
-Create `android/local.properties`:
+Create `android/local.properties` with:
 ```
-sdk.dir=/Users/YOUR_USERNAME/Library/Android/sdk         # macOS
-sdk.dir=C:\\Users\\YOUR_USERNAME\\AppData\\Local\\Android\\Sdk  # Windows
-```
-
-### "Execution failed for task ':app:mergeReleaseResources'"
-Duplicate resources from the bundle command. Fix:
-```bash
-# Delete duplicate drawable folders
-rm -rf android/app/src/main/res/drawable-*
-rm -rf android/app/src/main/res/raw
-
-# Re-run the bundle command from Step 3
-# Then rebuild
+sdk.dir=C\:\\Users\\YOUR_USERNAME\\AppData\\Local\\Android\\Sdk
 ```
 
-### Java version error
-Ensure JAVA_HOME points to JDK 17 (bundled with Android Studio).
+### JDK 21 issues
+Expo SDK 54 / React Native 0.81 works best with **JDK 17**. If you have JDK 21, it should work too, but if you see errors, try JDK 17.
